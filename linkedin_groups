@@ -1,0 +1,55 @@
+from selenium import webdriver
+import locale
+import requests
+import json
+import time
+import pandas as pd
+import re
+from bs4 import BeautifulSoup
+key = '('*******************')'
+
+locale.setlocale( locale.LC_ALL, '' )
+url = 'https://www.linkedin.com/login'
+driver = webdriver.Firefox(executable_path=r'C:\Users\trade\Downloads\geckodriver.exe')
+driver.set_window_size(1120, 550)
+driver.get(url)
+
+driver.find_element_by_id('username').send_keys('*******************')
+driver.find_element_by_id('password').send_keys('('*******************')')
+driver.find_element_by_tag_name('button').click()
+m = []
+text = []
+links = []
+groups = []
+df = pd.DataFrame()
+
+for x in range(100):
+    try:
+        url = 'https://www.linkedin.com/search/results/groups/?keywords=cybersecurity&origin=SUGGESTIONpage&page=' + str(x+1)
+        driver.get(url)
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        print(url)
+        link = soup.find_all('a',{'class':'app-aware-link'})
+
+
+        for x in range(len(link)):
+            if link[x].text.replace('\n','').replace('\n\n','').strip() != '':
+                    links.append(link[x]['href'].replace('\n',''))
+                    groups.append(link[x].text)
+            else:
+                pass
+
+        mems = soup.find_all('div',{'class':'entity-result__primary-subtitle t-14 t-black'})
+        for x in range(len(mems)):
+            m.append(mems[x].text.split()[0])
+            text.append(soup.find_all('p',{'class':'entity-result__summary t-12 t-black--light '})[x].text.replace('\n','').replace('\n\n','').lower())
+        time.sleep(0.5)
+        
+    except:
+        break
+df['Group'] = groups    
+df['Members'] = m
+df['Bio'] = text
+df['Link'] = links
+df
+
